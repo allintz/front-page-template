@@ -1,0 +1,6 @@
+.password
+data/
+logs/
+.wrangler/
+node_modules/
+.dev.vars

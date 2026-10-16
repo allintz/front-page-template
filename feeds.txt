@@ -1,0 +1,58 @@
+# DEFAULT SOURCE MENU: about 40 sources on AI safety/governance, democracy and elections, news, and ideas,
+# all verified working in Oct 2026. Setup keeps all of them unless you drop some, then adds your own.
+#
+# Sources checked every day. One per line:  TYPE  URL-or-host  NAME  [| editorial note]
+#   substack   Substack or Substack-hosted custom domain (host only)
+#   rss        any RSS/Atom feed URL
+#   lesswrong / eaforum   frontpage posts via the forum API
+#   site       no usable feed: Claude runs a targeted web search on this domain each day
+# The optional "| note" after the name tells the editor how to treat that source.
+# Lines starting with # are ignored. Add or delete freely.
+
+# --- AI safety, governance, forecasting ---
+lesswrong lesswrong.com                       LessWrong | at most 4 per day; prefer high-karma posts on AI governance, forecasting, democracy
+eaforum   forum.effectivealtruism.org         EA Forum | at most 3 per day; prefer high-karma posts
+substack  thezvi.substack.com                 Don't Worry About the Vase (Zvi)
+substack  blog.sentinel-team.org              Sentinel
+substack  epochai.substack.com                Epoch AI
+substack  www.transformernews.ai              Transformer
+substack  importai.substack.com               Import AI
+substack  newsletter.forethought.org          Forethought
+substack  blog.redwoodresearch.org            Redwood Research
+rss       https://intelligence.org/feed/      MIRI
+rss       https://www.iaps.ai/research?format=rss   IAPS
+site      governance.ai                       GovAI | new research, reports, or blog posts only
+substack  writing.antonleicht.me              Anton Leicht
+substack  newsletter.semianalysis.com         SemiAnalysis | AI compute, chips, labs; many posts are paywalled, say so
+substack  chinai.substack.com                 ChinAI
+substack  www.chinatalk.media                 ChinaTalk | AI, tech, and US-China items; skip unrelated episodes
+
+# --- Democracy, elections, US politics ---
+substack  trumptyrannytracker.substack.com    Tyranny Tracker
+rss       https://www.democracydocket.com/news-alerts/feed/   Democracy Docket
+rss       https://www.votebeat.org/arc/outboundfeeds/rss/     Votebeat
+rss       https://boltsmag.org/feed/          Bolts
+substack  lawfare.substack.com                Lawfare | daily digest posts; fetch the digest and link the individual Lawfare articles on democracy, rule of law, elections, or AI policy, not the digest itself
+site      lawfaremedia.org                    Lawfare (site) | backup if the digest is missing; same topics
+substack  www.natesilver.net                  Silver Bulletin
+substack  www.slowboring.com                  Slow Boring
+substack  www.gelliottmorris.com              Strength In Numbers (G. Elliott Morris)
+substack  tavernresearch.substack.com         Tavern Research
+site      blueroseresearch.org                Blue Rose Research | new public research or data releases only
+rss       https://www.whitehouse.gov/presidential-actions/feed/   White House: presidential actions | executive orders, memoranda, proclamations with real policy content; skip ceremonial ones
+rss       https://www.whitehouse.gov/news/feed/                   White House: news | only substantive policy announcements; skip messaging and ceremonies
+rss       https://www.reddit.com/r/politics/top.rss?t=day&limit=25   r/politics | use as a signal of what's big today; link the underlying article when you can, at most 2 items
+
+# --- News ---
+rss       https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml   New York Times | only stories on the reader's topics or major national news
+rss       https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml   New York Times: Politics
+rss       https://www.economist.com/latest/rss.xml                    The Economist | only stories on the reader's topics or genuinely important world news
+
+# --- Ideas and commentary ---
+substack  www.astralcodexten.com              Astral Codex Ten
+substack  benthams.substack.com               Bentham's Bulldog
+substack  www.richardhanania.com              Richard Hanania
+substack  www.noahpinion.blog                 Noahpinion
+rss       https://marginalrevolution.com/feed Marginal Revolution | only posts relevant to the reader's topics or genuinely surprising, at most 2
+substack  adamtooze.substack.com              Chartbook (Adam Tooze)
+rss       https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine.rss   Money Stuff (Matt Levine) | only when an issue touches AI companies, politics, or something the reader would find important

@@ -1,0 +1,11 @@
+{
+  "page_title": "Front Page",
+  "site_url": "https://REPLACE_WITH_SITE_URL",
+  "timezone": "America/New_York",
+  "model": "claude-sonnet-5-5",
+  "sections": [
+    "Top stories",
+    "Analysis & ideas",
+    "Also worth a look"
+  ]
+}

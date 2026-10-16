@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Front Page new tab",
+  "version": "1.1",
+  "description": "Opens Front Page on every new tab.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "icons": {
+    "128": "icon-128.png"
+  },
+  "host_permissions": [
+    "https://REPLACE_WITH_SITE_URL/*"
+  ]
+}
