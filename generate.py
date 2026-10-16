@@ -70,6 +70,51 @@ def clean(text, n=280):
     return text[:n]
 
 
+MEDIA = "{http://search.yahoo.com/mrss/}"
+BAD_IMAGE = re.compile(r"logo|favicon|default|placeholder|avatar|gravatar|spacer|pixel|1x1|icon|new_mississippi_river", re.I)
+
+
+def good_image(url):
+    url = html.unescape((url or "").strip())
+    return url if url.startswith("https://") and not BAD_IMAGE.search(url) else None
+
+
+def first_img(text):
+    m = re.search(r"<img[^>]+src=[\"']([^\"']+)", html.unescape(text or ""))
+    return good_image(m.group(1)) if m else None
+
+
+def rss_image(it):
+    for tag in (f"{MEDIA}content", f"{MEDIA}thumbnail"):
+        for el in it.iter(tag):
+            if el.get("url") and (el.get("medium") in (None, "image") or "image" in (el.get("type") or "")):
+                img = good_image(el.get("url"))
+                if img:
+                    return img
+    enc = it.find("enclosure")
+    if enc is not None and "image" in (enc.get("type") or ""):
+        img = good_image(enc.get("url"))
+        if img:
+            return img
+    return first_img(it.findtext("{http://purl.org/rss/1.0/modules/content/}encoded") or it.findtext("description"))
+
+
+def og_image(url):
+    """Best-effort og:image for items that arrived without one (web search hits)."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            head = r.read(300_000).decode("utf-8", "replace")
+    except Exception:
+        return None
+    for pat in (r'<meta[^>]+(?:property|name)=["\'](?:og:image|twitter:image)["\'][^>]+content=["\']([^"\']+)',
+                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\'](?:og:image|twitter:image)["\']'):
+        m = re.search(pat, head, re.I)
+        if m:
+            return good_image(urllib.parse.urljoin(url, m.group(1)))
+    return None
+
+
 def parse_date(s):
     if not s:
         return None
@@ -99,7 +144,9 @@ def read_feeds():
         if len(parts) < 2:
             continue
         name, _, note = (parts[2] if len(parts) > 2 else parts[1]).partition("|")
-        feeds.append({"type": parts[0], "src": parts[1], "name": name.strip(), "note": note.strip()})
+        note = note.strip()
+        feeds.append({"type": parts[0], "src": parts[1], "name": name.strip(), "note": note,
+                      "always": note.upper().startswith("ALWAYS")})
     return feeds
 
 
@@ -126,6 +173,7 @@ def fetch_substack(f):
             "summary": clean(p.get("subtitle") or p.get("description") or ""),
             "published": p.get("post_date"),
             "paywalled": p.get("audience") == "only_paid",
+            "image": good_image(p.get("cover_image")),
         })
     return out
 
@@ -144,6 +192,7 @@ def parse_rss(raw):
             "url": (it.findtext("link") or "").strip(),
             "summary": clean(it.findtext("description")),
             "published": it.findtext("pubDate") or it.findtext("{http://purl.org/dc/elements/1.1/}date"),
+            "image": rss_image(it),
         })
     for it in root.iter(f"{atom}entry"):
         link = it.find(f"{atom}link[@rel='alternate']") or it.find(f"{atom}link")
@@ -152,6 +201,7 @@ def parse_rss(raw):
             "url": link.get("href") if link is not None else "",
             "summary": clean(it.findtext(f"{atom}summary") or it.findtext(f"{atom}content")),
             "published": it.findtext(f"{atom}published") or it.findtext(f"{atom}updated"),
+            "image": rss_image(it) or first_img(it.findtext(f"{atom}content")),
         })
     return out
 
@@ -227,7 +277,8 @@ def ask_claude(cands, recent, saved_titles, feeds):
         "sections": SECTIONS,
         "feed_candidates": [{k: c[k] for k in ("id", "source", "title", "url", "summary", "published")} | (
             {"paywalled": True} if c.get("paywalled") else {}) for c in cands],
-        "source_notes": {f["name"]: f["note"] for f in feeds if f["note"] and f["type"] != "site"},
+        "source_notes": {f["name"]: f["note"] for f in feeds if f["note"] and f["type"] != "site" and not f["always"]},
+        "always_include_sources": [f["name"] for f in feeds if f["always"]],
         "sites_to_search": [{"domain": f["src"], "name": f["name"], "note": f["note"]} for f in feeds if f["type"] == "site"],
         "recently_shown_urls": recent,
         "saved_for_later": saved_titles,
@@ -271,7 +322,7 @@ def link_ok(url):
 # ------------------------------------------------------------------- main ---
 
 def main():
-    args = set(sys.argv[1:])
+    args = set(sys.argv[1:])  # --fetch-only, --dry-run, --include-shown (rebuild today without the shown-before filter)
     DATA.mkdir(exist_ok=True)
     feeds = read_feeds()
     cands, report = fetch_all(feeds)
@@ -285,7 +336,8 @@ def main():
     history = remote.get("history") or {}   # every item shown, with first_seen, so nothing repeats
     state = remote.get("state") or {"read": {}, "saved": {}}
 
-    cands = [c for c in cands if c["id"] not in history]  # only show each feed post once
+    if "--include-shown" not in args:
+        cands = [c for c in cands if c["id"] not in history]  # only show each feed post once
     week_ago = (NOW - dt.timedelta(days=RECENT_DAYS)).isoformat()
     recent = [h["url"] for h in history.values() if h["first_seen"] >= week_ago]
     saved_titles = [s.get("title") for s in state.get("saved", {}).values()]
@@ -315,7 +367,33 @@ def main():
             "blurb": it.get("blurb", ""),
             "importance": int(it.get("importance", 1)),
             "published": it.get("published") or src.get("published"),
+            "image": src.get("image"),
         })
+
+    # Guarantee "always include" sources even if the editor skipped one.
+    always = {f["name"] for f in feeds if f["always"]}
+    for c in cands:
+        if c["source"] in always and c["id"] not in seen:
+            log(f"  added always-include item the editor skipped: {c['title']}")
+            seen.add(c["id"])
+            items.append({"id": c["id"], "url": c["url"], "title": c["title"], "source": c["source"],
+                          "section": SECTIONS[0], "blurb": c.get("summary", ""), "importance": 2,
+                          "published": c.get("published"), "image": c.get("image")})
+
+    # Images for items that arrived without one (mostly web search hits).
+    missing = [i for i in items if not i.get("image")]
+    with ThreadPoolExecutor(8) as ex:
+        for i, img in zip(missing, ex.map(lambda i: og_image(i["url"]), missing)):
+            i["image"] = img
+    # An image shared by several items is a site default (e.g. LessWrong's river photo), not the post's own.
+    counts = {}
+    for i in items:
+        if i.get("image"):
+            counts[i["image"]] = counts.get(i["image"], 0) + 1
+    for i in items:
+        if i.get("image") and counts[i["image"]] > 1:
+            i["image"] = None
+    log(f"  images: {sum(1 for i in items if i.get('image'))}/{len(items)}")
 
     stamp = NOW.isoformat()
     for i in items:

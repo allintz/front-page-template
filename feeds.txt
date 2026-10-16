@@ -7,6 +7,7 @@
 #   lesswrong / eaforum   frontpage posts via the forum API
 #   site       no usable feed: Claude runs a targeted web search on this domain each day
 # The optional "| note" after the name tells the editor how to treat that source.
+# A note starting with ALWAYS means every new post from that source goes on the page (e.g. "| ALWAYS include every new post").
 # Lines starting with # are ignored. Add or delete freely.
 
 # --- AI safety, governance, forecasting ---

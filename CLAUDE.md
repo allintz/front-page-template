@@ -12,7 +12,7 @@ If the user asks you to set this up (or just opens this repo and says "go"), fol
 | `feeds.txt` | Sources checked daily (format documented at the top). Ships with an example list. |
 | `config.json` | Page title, site URL, timezone, model, section names (page order; last one is the catch-all). |
 | `prompt.md` | Editorial instructions; `{{PROFILE}}` is replaced with `profile.md`. Rarely needs edits. |
-| `generate.py` | The build: fetch feeds, call `claude -p` (tools limited to WebSearch/WebFetch), validate links, publish via the Worker. `--fetch-only` tests feeds; `--dry-run` builds without publishing. |
+| `generate.py` | The build: fetch feeds, call `claude -p` (tools limited to WebSearch/WebFetch), validate links, publish via the Worker. `--fetch-only` tests feeds; `--dry-run` builds without publishing; `--include-shown` rebuilds today without skipping posts already shown. |
 | `worker.js` | Cloudflare Worker: login, page rendering, read/save tracking, build endpoints. |
 | `.github/workflows/build.yml` | Daily schedule. |
 | `extension/` | Tiny Chrome extension that shows the page on every new tab. |
@@ -31,7 +31,7 @@ If this folder is a clone of the template repo, remove the template's remote (`g
 
 Use AskUserQuestion (batched) to learn:
 1. **Who they are and what they work on**, and their topics in priority order. Ask what they'd be annoyed to miss.
-2. **Sources.** Start from the menu in `feeds.txt`: about 40 working sources on AI safety and governance, democracy and elections, news, and ideas,. Show it to the user as a short list grouped by its `# ---` headings (one line per source: name plus a few words on what it is). **The default is to keep all of them**; ask which groups or individual sources to drop, rather than making them pick from scratch. Then ask what to add: newsletters, Substacks, blogs, outlets, forums, subreddits, think tanks. Offer to look at their most-visited sites in Chrome history (only with explicit permission; read the `History` SQLite file from a copy, top domains over the last 30 days) to jog their memory.
+2. **Sources.** Start from the menu in `feeds.txt`: about 40 working sources on AI safety and governance, democracy and elections, news, and ideas,. Show it to the user as a short list grouped by its `# ---` headings (one line per source: name plus a few words on what it is). **The default is to keep all of them**; ask which groups or individual sources to drop, rather than making them pick from scratch. Ask whether any sources should **always** be included (every new post, no filtering); mark those with a note starting `ALWAYS`. Then ask what to add: newsletters, Substacks, blogs, outlets, forums, subreddits, think tanks. Offer to look at their most-visited sites in Chrome history (only with explicit permission; read the `History` SQLite file from a copy, top domains over the last 30 days) to jog their memory.
 3. **What to skip.**
 4. **Sections**: 3 to 5 headings for the page, in order. Suggest some from their topics.
 5. **Timezone and build time** (default 6am local), and a **page title** (default "Front Page").
